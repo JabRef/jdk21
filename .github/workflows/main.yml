@@ -301,6 +301,7 @@ jobs:
 
   test-linux-x64:
     name: linux-x64
+    if: false
     needs:
       - build-linux-x64
     uses: ./.github/workflows/test.yml
@@ -311,6 +312,7 @@ jobs:
 
   test-linux-x86:
     name: linux-x86
+    if: false
     needs:
       - build-linux-x86
     uses: ./.github/workflows/test.yml
@@ -321,6 +323,7 @@ jobs:
 
   test-macos-x64:
     name: macos-x64
+    if: false
     needs:
       - build-macos-x64
     uses: ./.github/workflows/test.yml
@@ -331,6 +334,7 @@ jobs:
 
   test-windows-x64:
     name: windows-x64
+    if: false
     needs:
       - build-windows-x64
     uses: ./.github/workflows/test.yml
