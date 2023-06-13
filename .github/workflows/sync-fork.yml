@@ -1,7 +1,6 @@
 name: 'Upstream Sync'
 
 on:
-  push:
   schedule:
     - cron:  '5 2 * * *'
   workflow_dispatch:
@@ -22,12 +21,12 @@ jobs:
       id: sync
       uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
       with:
-        target_sync_branch: jdk21-fix-8240567
+        target_sync_branch: master
         target_repo_token: ${{ secrets.GITHUB_TOKEN }}
         upstream_sync_branch: master
         upstream_sync_repo: openjdk/jdk21
         upstream_repo_access_token: ${{ secrets.UPSTREAM_REPO_SECRET }}
-        test_mode: true
+        test_mode: false
 
     - name: New commits found
       if: steps.sync.outputs.has_new_commits == 'true'
@@ -39,3 +38,11 @@ jobs:
 
     - name: Show value of 'has_new_commits'
       run: echo ${{ steps.sync.outputs.has_new_commits }}
+
+    - name: update jdk21-fix-8240567
+      run: |
+        git checkout jdk21-fix-8240567
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Actions"
+        git merge master
+        git push
