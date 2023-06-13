@@ -1,6 +1,7 @@
 name: 'Upstream Sync'
 
 on:
+  push:
   schedule:
     - cron:  '5 2 * * *'
   workflow_dispatch:
