@@ -25,9 +25,10 @@ jobs:
         target_repo_token: ${{ secrets.GITHUB_TOKEN }}
         upstream_sync_branch: master
         upstream_sync_repo: openjdk/jdk21
-        upstream_repo_access_token: ${{ secrets.UPSTREAM_REPO_SECRET }}
         test_mode: false
 
+    - name: Debug outputs
+      run: echo "${{ toJson(steps.sync.outputs) }}"
     - name: New commits found
       if: steps.sync.outputs.has_new_commits == 'true'
       run: echo "New commits were found to sync."
