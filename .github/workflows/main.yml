@@ -32,10 +32,6 @@ on:
       - pr/*
   workflow_dispatch:
     inputs:
-      platforms:
-        description: 'Platform(s) to execute on (comma separated, e.g. "linux-x64, macos, aarch64")'
-        required: true
-        default: 'linux-x64, macos-x64, macos-aarch64, windows-x64'
       configure-arguments:
         description: 'Additional configure arguments'
         required: false
@@ -68,56 +64,18 @@ jobs:
       docs: ${{ steps.include.outputs.docs }}
 
     steps:
-        # This function must be inlined in main.yml, or we'd be forced to checkout the repo
-      - name: 'Check what jobs to run'
+      - name: 'Set what jobs to run'
         id: include
         run: |
-          # Determine which platform jobs to run
-
-          # Returns 'true' if the input platform list matches any of the platform monikers given as argument,
-          # 'false' otherwise.
-          # arg $1: platform name or names to look for
-          function check_platform() {
-            if [[ $GITHUB_EVENT_NAME == workflow_dispatch ]]; then
-              input='${{ github.event.inputs.platforms }}'
-            elif [[ $GITHUB_EVENT_NAME == push ]]; then
-              if [[ '${{ !secrets.JDK_SUBMIT_FILTER || startsWith(github.ref, 'refs/heads/submit/') }}' == 'false' ]]; then
-                # If JDK_SUBMIT_FILTER is set, and this is not a "submit/" branch, don't run anything
-                >&2 echo 'JDK_SUBMIT_FILTER is set and not a "submit/" branch'
-                echo 'false'
-                return
-              else
-                input='${{ secrets.JDK_SUBMIT_PLATFORMS }}'
-              fi
-            fi
-
-            normalized_input="$(echo ,$input, | tr -d ' ')"
-            if [[ "$normalized_input" == ",," ]]; then
-              # For an empty input, assume all platforms should run
-              echo 'true'
-              return
-            else
-              # Check for all acceptable platform names
-              for part in $* ; do
-                if echo "$normalized_input" | grep -q -e ",$part," ; then
-                  echo 'true'
-                  return
-                fi
-              done
-            fi
-
-            echo 'false'
-          }
-
-          echo "linux-x64=$(check_platform linux-x64 linux x64)" >> $GITHUB_OUTPUT
-          echo "linux-x86=$(check_platform linux-x86 linux x86)" >> $GITHUB_OUTPUT
-          echo "linux-x64-variants=$(check_platform linux-x64-variants variants)" >> $GITHUB_OUTPUT
-          echo "linux-cross-compile=$(check_platform linux-cross-compile cross-compile)" >> $GITHUB_OUTPUT
-          echo "macos-x64=$(check_platform macos-x64 macos x64)" >> $GITHUB_OUTPUT
-          echo "macos-aarch64=$(check_platform macos-aarch64 macos aarch64)" >> $GITHUB_OUTPUT
-          echo "windows-x64=$(check_platform windows-x64 windows x64)" >> $GITHUB_OUTPUT
-          echo "windows-aarch64=$(check_platform windows-aarch64 windows aarch64)" >> $GITHUB_OUTPUT
-          echo "docs=$(check_platform docs)" >> $GITHUB_OUTPUT
+          echo "linux-x64=true" >> $GITHUB_OUTPUT
+          echo "linux-x86=false" >> $GITHUB_OUTPUT
+          echo "linux-x64-variants=false" >> $GITHUB_OUTPUT
+          echo "linux-cross-compile=false" >> $GITHUB_OUTPUT
+          echo "macos-x64=true" >> $GITHUB_OUTPUT
+          echo "macos-aarch64=true" >> $GITHUB_OUTPUT
+          echo "windows-x64=true" >> $GITHUB_OUTPUT
+          echo "windows-aarch64=false" >> $GITHUB_OUTPUT
+          echo "docs=false" >> $GITHUB_OUTPUT
 
   ###
   ### Build jobs
