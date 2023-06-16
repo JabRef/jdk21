@@ -400,5 +400,5 @@ jobs:
           flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
           options: ''
           ssh_options: '-p 9922'
-          src: '/tmp/bundles'
+          src: '../../tmp/bundles'
           dest: jrrsync@build-upload.jabref.org:/var/www/files.jabref.org/www/jdks/
