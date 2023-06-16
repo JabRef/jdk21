@@ -25,3 +25,9 @@ jobs:
         git fetch upstream
         git merge upstream/master
         git push
+
+  build:
+     # The GitHub trigger "push" does not trigger if a push happens inside a workflow.
+     # Thus, we manually trigger building
+     needs: sync_latest_from_upstream
+     uses: ./.github/workflows/main.yml
