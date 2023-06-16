@@ -27,6 +27,16 @@ name: 'OpenJDK GHA Sanity Checks'
 
 on:
   push:
+  workflow_call:
+    inputs:
+      configure-arguments:
+        description: 'Additional configure arguments'
+        required: false
+        type: string
+      make-arguments:
+        description: 'Additional make arguments'
+        required: false
+        type: string
   workflow_dispatch:
     inputs:
       configure-arguments:
