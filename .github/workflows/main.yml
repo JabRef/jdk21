@@ -374,7 +374,6 @@ jobs:
 
       - name: 'Get bundle artifacts'
         run: |
-          cd /tmp
           mkdir bundles
           cd bundles
           # Find and remove all bundle artifacts
@@ -391,6 +390,7 @@ jobs:
                 "$url" \
             || echo "Failed to GET bundle"
           done
+          ls -la
       - name: Deploy to builds.jabref.org
         id: deploy
         uses: Pendect/action-rsyncer@v2.0.0
@@ -400,5 +400,5 @@ jobs:
           flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
           options: ''
           ssh_options: '-p 9922'
-          src: '../../tmp/bundles'
+          src: 'bundles/'
           dest: jrrsync@build-upload.jabref.org:/var/www/files.jabref.org/www/jdks/
