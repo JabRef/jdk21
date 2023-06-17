@@ -383,12 +383,13 @@ jobs:
               '${{ fromJson(steps.api.outputs.result).url }}_apis/pipelines/workflows/${{ github.run_id }}/artifacts?api-version=6.0-preview')"
           BUNDLE_ARTIFACT_URLS="$(echo "$ALL_ARTIFACT_URLS" | jq -r -c '.value | map(select(.name|startswith("bundles-"))) | .[].url')"
           for url in $BUNDLE_ARTIFACT_URLS; do
+            echo ""
             echo "GET $url"
-            curl -s \
+            ARTIFACT_URL="$(curl -s \
                 -H 'Accept: application/json;api-version=6.0-preview' \
                 -H 'Authorization: Bearer ${{ fromJson(steps.api.outputs.result).token }}' \
-                "$url" \
-            || echo "Failed to GET bundle"
+                $url | jq -r '.url')"
+            curl -O $ARTIFACT_URL
           done
           ls -la
       - name: Deploy to builds.jabref.org
