@@ -54,10 +54,7 @@ on:
       make-arguments:
         required: false
         type: string
-      DEPLOY_KEY:
-        required: false
-        type: string
-
+    secrets: inherit
 env:
   # These are needed to make the MSYS2 bash work properly
   MSYS2_PATH_TYPE: minimal
@@ -152,4 +149,4 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
           debug-suffix: '${{ matrix.suffix }}'
-          DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}

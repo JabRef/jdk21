@@ -51,9 +51,7 @@ on:
       make-arguments:
         required: false
         type: string
-      DEPLOY_KEY:
-        required: false
-        type: string
+    secrets: inherit
 
 jobs:
   build-macos:
@@ -120,4 +118,4 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
           debug-suffix: '${{ matrix.suffix }}'
-          DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
