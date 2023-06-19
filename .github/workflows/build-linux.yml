@@ -64,8 +64,28 @@ on:
       make-arguments:
         required: false
         type: string
+      DEPLOY_KEY:
+        required: false
+        type: string
 
 jobs:
+  testupload:
+    name: 'Test'
+    runs-on: ubuntu-22.04
+    steps:
+      - run: |
+          mkdir bundles
+          echo "new" > bundles/test.txt
+      - name: Upload to builds.jabref.org
+        uses: Pendect/action-rsyncer@v2.0.0
+        env:
+          DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}
+        with:
+          flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
+          options: ''
+          ssh_options: '-p 9922'
+          src: 'bundles/'
+          dest: jrrsync@build-upload.jabref.org:/var/www/files.jabref.org/www/jdks/
   build-linux:
     name: build
     runs-on: ubuntu-22.04
@@ -142,3 +162,4 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
           debug-suffix: '${{ matrix.suffix }}'
+          DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}

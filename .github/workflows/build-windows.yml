@@ -54,6 +54,9 @@ on:
       make-arguments:
         required: false
         type: string
+      DEPLOY_KEY:
+        required: false
+        type: string
 
 env:
   # These are needed to make the MSYS2 bash work properly
@@ -149,3 +152,4 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
           debug-suffix: '${{ matrix.suffix }}'
+          DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}

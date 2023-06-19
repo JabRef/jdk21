@@ -52,25 +52,6 @@ concurrency:
 
 jobs:
 
-  testupload:
-    name: 'Test'
-    runs-on: ubuntu-22.04
-    steps:
-      - run: |
-          mkdir bundles
-          touch bundles/test.txt
-      - name: Upload to builds.jabref.org
-        uses: Pendect/action-rsyncer@v2.0.0
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-        with:
-          flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
-          options: ''
-          ssh_options: '-p 9922'
-          src: 'bundles/'
-          dest: jrrsync@build-upload.jabref.org:/var/www/files.jabref.org/www/jdks/
-
-
   ###
   ### Determine platforms to include
   ###
@@ -117,6 +98,7 @@ jobs:
       apt-gcc-version: '10.4.0-4ubuntu1~22.04'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     # The linux-x64 jdk bundle is used as buildjdk for the cross-compile job
     if: needs.select.outputs.linux-x64 == 'true' || needs.select.outputs.linux-cross-compile == 'true'
 
@@ -136,6 +118,7 @@ jobs:
       extra-conf-options: '--with-target-bits=32'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.linux-x86 == 'true'
 
   build-linux-x64-hs-nopch:
@@ -151,6 +134,7 @@ jobs:
       extra-conf-options: '--disable-precompiled-headers'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.linux-x64-variants == 'true'
 
   build-linux-x64-hs-zero:
@@ -166,6 +150,7 @@ jobs:
       extra-conf-options: '--with-jvm-variants=zero --disable-precompiled-headers'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.linux-x64-variants == 'true'
 
   build-linux-x64-hs-minimal:
@@ -181,6 +166,7 @@ jobs:
       extra-conf-options: '--with-jvm-variants=minimal --disable-precompiled-headers'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.linux-x64-variants == 'true'
 
   build-linux-x64-hs-optimized:
@@ -197,6 +183,7 @@ jobs:
       extra-conf-options: '--with-debug-level=optimized --disable-precompiled-headers'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.linux-x64-variants == 'true'
 
   build-linux-cross-compile:
@@ -211,6 +198,7 @@ jobs:
       apt-gcc-cross-version: '10.4.0-4ubuntu1~22.04cross1'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.linux-cross-compile == 'true'
 
   build-macos-x64:
@@ -222,6 +210,7 @@ jobs:
       xcode-toolset-version: '12.5.1'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.macos-x64 == 'true'
 
   build-macos-aarch64:
@@ -234,6 +223,7 @@ jobs:
       extra-conf-options: '--openjdk-target=aarch64-apple-darwin'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.macos-aarch64 == 'true'
 
   build-windows-x64:
@@ -246,6 +236,7 @@ jobs:
       msvc-toolset-architecture: 'x86.x64'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.windows-x64 == 'true'
 
   build-windows-aarch64:
@@ -260,6 +251,7 @@ jobs:
       extra-conf-options: '--openjdk-target=aarch64-unknown-cygwin'
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     if: needs.select.outputs.windows-aarch64 == 'true'
 
   build-docs:

@@ -32,6 +32,8 @@ inputs:
   debug-suffix:
     description: 'File name suffix denoting debug level, possibly empty'
     required: false
+  DEPLOY_KEY:
+    required: true
 
 runs:
   using: composite
@@ -79,7 +81,7 @@ runs:
     - name: Upload to builds.jabref.org
       uses: Pendect/action-rsyncer@v2.0.0
       env:
-        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}
       with:
         flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
         options: ''
