@@ -31,3 +31,4 @@ jobs:
      # Thus, we manually trigger building
      needs: sync_latest_from_upstream
      uses: ./.github/workflows/main.yml
+     secrets: inherit

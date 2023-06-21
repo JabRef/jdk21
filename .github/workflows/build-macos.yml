@@ -51,7 +51,6 @@ on:
       make-arguments:
         required: false
         type: string
-    secrets: inherit
 
 jobs:
   build-macos:
