@@ -73,13 +73,13 @@ jobs:
       - name: 'Checkout the JDK source'
         uses: actions/checkout@v3
       - run: |
-          mkdir bundles
-          echo "new" > bundles/test.txt
+          mkdir -p bundles/x/bundles
+          touch bundles/x/bundles/jdk-dummy_bin.tar.gz
       - name: 'Upload bundles'
         uses: ./.github/actions/upload-bundles
         with:
           platform: ${{ inputs.platform }}
-          debug-suffix: '${{ matrix.suffix }}'
+          debug-suffix: 'dummy'
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
   build-linux:
     name: build
