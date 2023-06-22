@@ -66,21 +66,6 @@ on:
         type: string
 
 jobs:
-  testupload:
-    name: 'Test'
-    runs-on: ubuntu-22.04
-    steps:
-      - name: 'Checkout the JDK source'
-        uses: actions/checkout@v3
-      - run: |
-          mkdir -p build/x/bundles
-          touch build/x/bundles/jdk-dummy_bin.tar.gz
-      - name: 'Upload bundles'
-        uses: ./.github/actions/upload-bundles
-        with:
-          platform: ${{ inputs.platform }}
-          debug-suffix: 'dummy'
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
   build-linux:
     name: build
     runs-on: ubuntu-22.04
