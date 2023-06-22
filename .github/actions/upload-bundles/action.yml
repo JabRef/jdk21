@@ -77,15 +77,3 @@ runs:
         path: bundles
         retention-days: 1
       if: steps.bundles.outputs.bundles-found == 'true'
-
-    - name: Upload to builds.jabref.org
-      uses: Pendect/action-rsyncer@v2.0.0
-      env:
-        DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}
-      with:
-        flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
-        options: ''
-        ssh_options: '-p 9922'
-        src: 'bundles/'
-        dest: jrrsync@build-upload.jabref.org:/var/www/files.jabref.org/www/jdks/
-      if: steps.bundles.outputs.bundles-found == 'true'

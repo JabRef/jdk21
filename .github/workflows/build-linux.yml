@@ -157,4 +157,3 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
           debug-suffix: '${{ matrix.suffix }}'
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}

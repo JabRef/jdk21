@@ -92,7 +92,6 @@ jobs:
     name: linux-x64
     needs: select
     uses: ./.github/workflows/build-linux.yml
-    secrets: inherit
     with:
       platform: linux-x64
       gcc-major-version: '10'
@@ -106,7 +105,6 @@ jobs:
     name: linux-x86
     needs: select
     uses: ./.github/workflows/build-linux.yml
-    secrets: inherit
     with:
       platform: linux-x86
       gcc-major-version: '10'
@@ -125,7 +123,6 @@ jobs:
     name: linux-x64-hs-nopch
     needs: select
     uses: ./.github/workflows/build-linux.yml
-    secrets: inherit
     with:
       platform: linux-x64
       make-target: 'hotspot'
@@ -141,7 +138,6 @@ jobs:
     name: linux-x64-hs-zero
     needs: select
     uses: ./.github/workflows/build-linux.yml
-    secrets: inherit
     with:
       platform: linux-x64
       make-target: 'hotspot'
@@ -157,7 +153,6 @@ jobs:
     name: linux-x64-hs-minimal
     needs: select
     uses: ./.github/workflows/build-linux.yml
-    secrets: inherit
     with:
       platform: linux-x64
       make-target: 'hotspot'
@@ -173,7 +168,6 @@ jobs:
     name: linux-x64-hs-optimized
     needs: select
     uses: ./.github/workflows/build-linux.yml
-    secrets: inherit
     with:
       platform: linux-x64
       make-target: 'hotspot'
@@ -192,7 +186,6 @@ jobs:
       - select
       - build-linux-x64
     uses: ./.github/workflows/build-cross-compile.yml
-    secrets: inherit
     with:
       gcc-major-version: '10'
       apt-gcc-version: '10.4.0-4ubuntu1~22.04'
@@ -205,7 +198,6 @@ jobs:
     name: macos-x64
     needs: select
     uses: ./.github/workflows/build-macos.yml
-    secrets: inherit
     with:
       platform: macos-x64
       xcode-toolset-version: '12.5.1'
@@ -217,7 +209,6 @@ jobs:
     name: macos-aarch64
     needs: select
     uses: ./.github/workflows/build-macos.yml
-    secrets: inherit
     with:
       platform: macos-aarch64
       xcode-toolset-version: '12.5.1'
@@ -230,7 +221,6 @@ jobs:
     name: windows-x64
     needs: select
     uses: ./.github/workflows/build-windows.yml
-    secrets: inherit
     with:
       platform: windows-x64
       msvc-toolset-version: '14.29'
@@ -243,7 +233,6 @@ jobs:
     name: windows-aarch64
     needs: select
     uses: ./.github/workflows/build-windows.yml
-    secrets: inherit
     with:
       platform: windows-aarch64
       msvc-toolset-version: '14.29'
@@ -258,7 +247,6 @@ jobs:
     name: docs
     needs: select
     uses: ./.github/workflows/build-linux.yml
-    secrets: inherit
     with:
       platform: linux-x64
       debug-levels: '[ "debug" ]'
@@ -366,3 +354,43 @@ jobs:
                 -X DELETE "$url" \
             || echo "Failed to remove bundle"
           done
+
+  upload-bundles:
+    name: Upload to builds.jabref.org
+    runs-on: ubuntu-22.04
+    needs:
+      - build-linux-x64
+      - build-macos-x64
+      - build-macos-aarch64
+      - build-windows-x64
+    steps:
+      - name: Get bundles-linux-x64
+        uses: actions/download-artifact@v3
+        with:
+          name: bundles-linux-x64
+          path: bundles
+      - name: Get bundles-macos-aarch64
+        uses: actions/download-artifact@v3
+        with:
+          name: bundles-macos-aarch64
+          path: bundles
+      - name: Get bundles-macos-x64
+        uses: actions/download-artifact@v3
+        with:
+          name: bundles-macos-x64
+          path: bundles
+      - name: Get bundles-windows-x64
+        uses: actions/download-artifact@v3
+        with:
+          name: bundles-windows-x64
+          path: bundles
+      - name: rsync
+        uses: Pendect/action-rsyncer@v2.0.0
+        env:
+          DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}
+        with:
+          flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
+          options: ''
+          ssh_options: '-p 9922'
+          src: 'bundles/'
+          dest: jrrsync@build-upload.jabref.org:/var/www/files.jabref.org/www/jdks/
