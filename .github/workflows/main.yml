@@ -384,10 +384,14 @@ jobs:
         with:
           name: bundles-windows-x64
           path: bundles
+      - name: Remove obsolete files
+        run: |
+          rm bundles/symbols*
+          rm bundles/tests*
       - name: rsync
         uses: Pendect/action-rsyncer@v2.0.0
         env:
-          DEPLOY_KEY: ${{ inputs.DEPLOY_KEY }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
         with:
           flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
           options: ''
