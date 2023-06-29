@@ -695,8 +695,8 @@ public final class SystemModulesPlugin extends AbstractPlugin {
             List<ModuleInfo> currentModuleInfos = null;
             for (int index = 0; index < moduleInfos.size(); index++) {
                 // The method is "manually split" based on the heuristics that 90 ModuleDescriptors are smaller than 64kb
-                // The number 50 is chosen "randomly" to be below the 64kb limit of a method
-                if (index % 50 == 0) {
+                // The number 75 is chosen, because it's the threshhold from above
+                if (index % 75 == 0) {
                     // Prepare new list
                     currentModuleInfos = new ArrayList<>();
                     splitModuleInfos.add(currentModuleInfos);
