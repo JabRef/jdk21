@@ -118,10 +118,15 @@ public final class SystemModulesPlugin extends AbstractPlugin {
             ClassDesc.ofInternalName("jdk/internal/module/SystemModules");
     private static final ClassDesc CD_SYSTEM_MODULES_MAP =
             ClassDesc.ofInternalName(SYSTEM_MODULES_MAP_CLASSNAME);
-    private final boolean enabled;
+    private final int moduleDescriptorsPerMethod;
+    private boolean enabled;
 
     public SystemModulesPlugin() {
+        this(75);
+    }
+    public SystemModulesPlugin(int moduleDescriptorsPerMethod) {
         super("system-modules");
+        this.moduleDescriptorsPerMethod = moduleDescriptorsPerMethod;
         this.enabled = true;
     }
 
@@ -316,7 +321,7 @@ public final class SystemModulesPlugin extends AbstractPlugin {
                                          String className,
                                          ResourcePoolBuilder out) {
         SystemModulesClassGenerator generator
-            = new SystemModulesClassGenerator(className, moduleInfos);
+            = new SystemModulesClassGenerator(className, moduleInfos, moduleDescriptorsPerMethod);
         byte[] bytes = generator.genClassBytes(cf);
         String rn = "/java.base/" + className + ".class";
         ResourcePoolEntry e = ResourcePoolEntry.create(rn, bytes);
@@ -517,10 +522,9 @@ public final class SystemModulesPlugin extends AbstractPlugin {
         private static final ClassDesc CD_MODULE_RESOLUTION =
             ClassDesc.ofInternalName("jdk/internal/module/ModuleResolution");
 
-        // Constant chosen for this generator, can be higher in practice
         private static final int MAX_LOCAL_VARS = 256;
 
-        private final int BUILDER_VAR    = MAX_LOCAL_VARS + 1; // we need 0 for "this"
+        private final int BUILDER_VAR    = MAX_LOCAL_VARS + 1;
         private final int MD_VAR         = 1;  // variable for ModuleDescriptor
         private final int MT_VAR         = 1;  // variable for ModuleTarget
         private final int MH_VAR         = 1;  // variable for ModuleHashes
@@ -532,6 +536,8 @@ public final class SystemModulesPlugin extends AbstractPlugin {
         // list of all ModuleInfos
         private final List<ModuleInfo> moduleInfos;
 
+        private final int moduleDescriptorsPerMethod;
+
         // A builder to create one single Set instance for a given set of
         // names or modifiers to reduce the footprint
         // e.g. target modules of qualified exports
@@ -539,9 +545,11 @@ public final class SystemModulesPlugin extends AbstractPlugin {
             = new DedupSetBuilder(this::getNextLocalVar);
 
         public SystemModulesClassGenerator(String className,
-                                           List<ModuleInfo> moduleInfos) {
+                                           List<ModuleInfo> moduleInfos,
+                                           int moduleDescriptorsPerMethod) {
             this.classDesc = ClassDesc.ofInternalName(className);
             this.moduleInfos = moduleInfos;
+            this.moduleDescriptorsPerMethod = moduleDescriptorsPerMethod;
             moduleInfos.forEach(mi -> dedups(mi.descriptor()));
         }
 
@@ -667,8 +675,7 @@ public final class SystemModulesPlugin extends AbstractPlugin {
          * Generate bytecode for moduleDescriptors method
          */
         private void genModuleDescriptorsMethod(ClassBuilder clb) {
-            if (moduleInfos.size() <= 75) {
-                // In case there won't be a Method_Too_Large exception, we use the unsplit method to generate the method "moduleDescriptors"
+            if (moduleInfos.size() <= moduleDescriptorsPerMethod) {
                 clb.withMethodBody(
                         "moduleDescriptors",
                         MethodTypeDesc.of(CD_MODULE_DESCRIPTOR.arrayType()),
@@ -690,14 +697,10 @@ public final class SystemModulesPlugin extends AbstractPlugin {
                 return;
             }
 
-            // split up module infos in "consumable" packages
             List<List<ModuleInfo>> splitModuleInfos = new ArrayList<>();
             List<ModuleInfo> currentModuleInfos = null;
             for (int index = 0; index < moduleInfos.size(); index++) {
-                // The method is "manually split" based on the heuristics that 90 ModuleDescriptors are smaller than 64kb
-                // The number 75 is chosen, because it's the threshhold from above
-                if (index % 75 == 0) {
-                    // Prepare new list
+                if (index % moduleDescriptorsPerMethod == 0) {
                     currentModuleInfos = new ArrayList<>();
                     splitModuleInfos.add(currentModuleInfos);
                 }
@@ -705,14 +708,10 @@ public final class SystemModulesPlugin extends AbstractPlugin {
             }
 
             final String helperMethodNamePrefix = "moduleDescriptorsSub";
-            // Variable holding List<Set>, which needs to be restored at each helper method
-            // This list grows at each call of each helper method
             final ClassDesc arrayListClassDesc = ClassDesc.ofInternalName("java/util/ArrayList");
 
-            // dedupSetBuilder will (!) use this index for the first variable
             final int firstVariableForDedup = nextLocalVar;
 
-            // generate call to first helper method
             clb.withMethodBody(
                     "moduleDescriptors",
                     MethodTypeDesc.of(CD_MODULE_DESCRIPTOR.arrayType()),
@@ -720,10 +719,8 @@ public final class SystemModulesPlugin extends AbstractPlugin {
                     cob -> {
                         cob.constantInstruction(moduleInfos.size())
                                 .anewarray(CD_MODULE_DESCRIPTOR)
-                                .dup() // storing for the return at the end
+                                .dup()
                                 .astore(MD_VAR);
-                        // Generate List of Sets required by dedupSetBuilder
-                        // We use slot "nextLocalVar" temporarily. We do net need the list later as the helper methods modify the list and pass it on.
                         cob.new_(arrayListClassDesc)
                            .dup()
                            .invokespecial(arrayListClassDesc, "<init>", MethodTypeDesc.of(CD_void))
@@ -739,7 +736,6 @@ public final class SystemModulesPlugin extends AbstractPlugin {
                            .areturn();
                     });
 
-            // generate all helper methods
             final int[] globalCount = {0};
             for (final int[] index = {0}; index[0] < splitModuleInfos.size(); index[0]++) {
                 clb.withMethodBody(
@@ -749,9 +745,7 @@ public final class SystemModulesPlugin extends AbstractPlugin {
                         cob -> {
                             List<ModuleInfo> moduleInfosPackage = splitModuleInfos.get(index[0]);
 
-                            // Restore all (!) sets from parameter to local variables
                             if (nextLocalVar > firstVariableForDedup) {
-                                // We need to go from the end to the beginning as we will probably overwrite position 2 (which holds the list at the beginning)
                                 for (int i = nextLocalVar-1; i >= firstVariableForDedup; i--) {
                                     cob.aload(2)
                                        .constantInstruction(i-firstVariableForDedup)
@@ -762,7 +756,6 @@ public final class SystemModulesPlugin extends AbstractPlugin {
 
                             for (int j = 0; j < moduleInfosPackage.size(); j++) {
                                 ModuleInfo minfo = moduleInfosPackage.get(j);
-                                // executed after the call, thus it is OK to overwrite index 0 (BUILDER_VAR)
                                 new ModuleDescriptorBuilder(cob,
                                         minfo.descriptor(),
                                         minfo.packages(),
@@ -771,10 +764,6 @@ public final class SystemModulesPlugin extends AbstractPlugin {
                             }
 
                             if (index[0] + 1 < (splitModuleInfos.size())) {
-                                // We are not the last one of the calling chain of helper methods
-                                // Prepare next call
-
-                                // Store all new sets to List
                                 if (nextLocalVar > firstVariableForDedup) {
                                     cob.new_(arrayListClassDesc)
                                        .dup()
@@ -784,12 +773,11 @@ public final class SystemModulesPlugin extends AbstractPlugin {
                                         cob.aload(nextLocalVar)
                                            .aload(i)
                                            .invokevirtual(arrayListClassDesc, "add", MethodTypeDesc.of(CD_boolean, CD_Object))
-                                           .pop(); // remove boolean result value
+                                           .pop();
                                     }
                                 }
-                                // call to next helper method
                                 cob.aload(0)
-                                   .aload(MD_VAR) // load first parameter, which is MD_VAR
+                                   .aload(MD_VAR)
                                    .aload(nextLocalVar)
                                    .invokevirtual(
                                            this.classDesc,
