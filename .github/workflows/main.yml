@@ -391,7 +391,7 @@ jobs:
       - name: rsync
         uses: Pendect/action-rsyncer@v2.0.0
         env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_KEY: ${{ secrets.BUILDJABREFPRIVATEKEY }}
         with:
           flags: -vazr --itemize-changes --stats --partial-dir=/tmp/partial
           options: ''
